@@ -47,7 +47,7 @@ func List() ([]*Package, error) {
 // Search list packages available in the system that match the search
 // pattern
 func Search(pattern string) ([]*Package, error) {
-	cmd := exec.Command("dpkg-query", "-W", "-f=${Package}\t${Architecture}\t${db:Status-Status}\t${Version}\t${Installed-Size}\t${Binary:summary}\n", pattern)
+	cmd := exec.Command("dpkg-query", "-l", "-f=${Package}\t${Architecture}\t${db:Status-Status}\t${Version}\t${Installed-Size}\t${Binary:summary}\n", pattern)
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -62,7 +62,7 @@ func Search(pattern string) ([]*Package, error) {
 }
 
 func parseDpkgQueryOutput(out []byte) []*Package {
-	res := []*Package{}
+	var res []*Package
 	scanner := bufio.NewScanner(bytes.NewReader(out))
 	for scanner.Scan() {
 		data := strings.Split(scanner.Text(), "\t")
@@ -86,7 +86,7 @@ func parseDpkgQueryOutput(out []byte) []*Package {
 // CheckForUpdates runs an apt update to retrieve new packages available
 // from the repositories
 func CheckForUpdates() (output []byte, err error) {
-	cmd := exec.Command("apt-get", "update", "-q")
+	cmd := exec.Command("/usr/bin/apt", "update", "-q")
 	return cmd.CombinedOutput()
 }
 
@@ -132,19 +132,19 @@ func Upgrade(packs ...*Package) (output []byte, err error) {
 		}
 		args = append(args, pack.Name)
 	}
-	cmd := exec.Command("apt-get", args...)
+	cmd := exec.Command("/usr/bin/apt", args...)
 	return cmd.CombinedOutput()
 }
 
 // UpgradeAll upgrade all upgradable packages
 func UpgradeAll() (output []byte, err error) {
-	cmd := exec.Command("apt-get", "upgrade", "-y")
+	cmd := exec.Command("/usr/bin/apt", "upgrade", "-y")
 	return cmd.CombinedOutput()
 }
 
 // DistUpgrade upgrades all upgradable packages, it may remove older versions to install newer ones.
 func DistUpgrade() (output []byte, err error) {
-	cmd := exec.Command("apt-get", "dist-upgrade", "-y")
+	cmd := exec.Command("/usr/bin/apt", "dist-upgrade", "-y")
 	return cmd.CombinedOutput()
 }
 
@@ -157,7 +157,12 @@ func Remove(packs ...*Package) (output []byte, err error) {
 		}
 		args = append(args, pack.Name)
 	}
-	cmd := exec.Command("apt-get", args...)
+	cmd := exec.Command("/usr/bin/apt", args...)
+	return cmd.CombinedOutput()
+}
+
+func AutoRemove() (output []byte, err error) {
+	cmd := exec.Command("/usr/bin/apt", "autoremove", "-y")
 	return cmd.CombinedOutput()
 }
 
@@ -170,6 +175,6 @@ func Install(packs ...*Package) (output []byte, err error) {
 		}
 		args = append(args, pack.Name)
 	}
-	cmd := exec.Command("apt-get", args...)
+	cmd := exec.Command("/usr/bin/apt", args...)
 	return cmd.CombinedOutput()
 }
